@@ -1,0 +1,95 @@
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+
+<script>
+    let users = [];
+    function performAjax(httpMethod, url, params) {
+        const myPromise = new Promise((resolve, reject) => {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    resolve(this.responseText);
+                }
+                if (this.status == 500) {
+                    reject({ error: true, message: "ServerError" });
+                }
+                if (this.status == 404) {
+                    reject({ error: true, message: "Resource not found" });
+                }
+            };
+            xhttp.open(httpMethod, url, true);
+            xhttp.setRequestHeader("Content-Type", "application/json");
+            params ? xhttp.send(params) : xhttp.send();
+        });
+        return myPromise;
+    }
+
+    function adminlogin() {
+        event.preventDefault();
+        const PhoneNo = document.getElementById("mobile").value;
+        const Password = document.getElementById("password").value;
+        const getLoginPromise = performAjax(
+            "GET",
+            `http://localhost:4000/bloodDoner/donerLogin?PhoneNo=${PhoneNo}&Password=${Password}`
+        );
+        getLoginPromise
+        .then((loginPromise) => {
+            if (loginPromise == []) {
+                alert('Login Faild');
+            }
+            else {
+                window.top.location.href = "user";
+            }
+        })
+        .catch(err => {
+            alert(err.message);
+        })
+    }
+
+</script>
+</head>
+<style>
+    .footer {
+                    position: fixed;
+                    left: 0;
+                    bottom: 0;
+                    width: 100%;
+                    background-color:#62046F;
+                    color: white;
+                    text-align: center;
+                    border-radius:10px;
+                     }
+        </style>
+  <div class="container">
+    <br>
+
+         <form onsubmit="adminlogin()">
+
+          <div class="row">
+            <div class="col-sm-3"></div>
+            <div class="col-sm-2"><label for="">Phone number:</label></div>
+            <div class="col-sm-3"><input type="number" class="form-control" id="mobile" required placeholder="enter phone number"></div>
+            <div class="col-sm-4"></div>
+          </div><br>
+          <div class="row">
+            <div class="col-sm-3"></div>
+            <div class="col-sm-2"><label for="">Password:</label></div>
+            <div class="col-sm-3"><input type="Password" class="form-control" required id="password" name="password"></div>
+            <div class="col-sm-4"></div>
+          </div><br>
+          <div class="row">
+            <div class="col-sm-5"></div>
+            <div class="col-sm-3"><button type="submit" class="btn btn-success" >Submit</button></div>
+            <div class="col-sm-4"></div>
+          </div><br><br>
+          <div class="row">
+            <div class="col-sm-5"></div>
+            <div class="col-sm-3"><a style="color:orangered" href="http://localhost:4568/donorRegistration">Register here....</a></div>
+            <div class="col-sm-4"></div>
+        
+       
+        </div>
+        </div><br>
+    
+    </form>

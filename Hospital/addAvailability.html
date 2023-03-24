@@ -1,0 +1,95 @@
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+<html>
+        <head>
+                <script>
+                const PhoneNo=sessionStorage.getItem("phoneno");
+                const District=sessionStorage.getItem("District");
+                  function performAjax(httpMethod, url, params) {
+                    const myPromise = new Promise((resolve, reject) => {
+                        var xhttp = new XMLHttpRequest();
+                        xhttp.onreadystatechange = function () {
+                            if (this.readyState == 4 && this.status == 200) {
+                                resolve(this.responseText);
+                            }
+                            if (this.status == 500) {
+                                reject({ error: true, message: "ServerError" });
+                            }
+                            if (this.status == 404) {
+                                reject({ error: true, message: "Resource not found" });
+                            }
+                        };
+                        xhttp.open(httpMethod, url, true);
+                        xhttp.setRequestHeader("Content-Type", "application/json");
+                        params ? xhttp.send(params) : xhttp.send();
+                    });
+                    return myPromise;
+                }
+                function addAvailability() {
+                  event.preventDefault();
+                    const  units= document.getElementById("units").value;
+                    const  bloodGroup = document.getElementById("bgroup").value;
+                   
+                    if (units == "") {
+                        alert("please enter units");
+                        return false;
+                    }
+                
+                    else {
+        
+                        const addDonorPromise = performAjax(
+                            "POST",
+                            "http://localhost:4000/bloodBank/bloodAdd",
+                            JSON.stringify({ PhoneNo,District, bloodGroup,units })
+                        );
+                        addDonorPromise
+                            .then(newDonorList => {
+                              alert('Successfully Added Units');
+        
+                            })
+                            .catch(err => {
+                                alert(err.message);
+                            })
+                    }
+                }
+                </script>
+            </head>
+            <body>
+<div class="container">
+    <form onsubmit="addAvailability()">
+          <div class="row">
+            <div class="col-sm-3"></div>
+            <div class="col-sm-2"><label for="">Blood group:</label></div>
+            <div class="col-sm-3">
+                    <select id="bgroup" class="form-control" required>
+                            <option value="-select-">-select-</option>
+                            <option value="OpVe">O+</option>
+                            <option value="OnVe">O-</option>
+                            <option value="ABpVe">AB+</option>
+                            <option value="ABnVe-">AB-</option>
+                            <option value="BpVe">B+</option>
+                            <option value="BnVe">B-</option>
+                            <option value="ApVe">A+</option>
+                            <option value="AnVe">A-</option>
+                          </select>
+            </div>
+            <div class="col-sm-4"></div>
+          </div><br>
+          <div class="row">
+            <div class="col-sm-3"></div>
+            <div class="col-sm-2"><label for="">available units:</label></div>
+            <div class="col-sm-3"><input type="number" id="units" required class="form-control" placeholder="enter available units"></div>
+            <div class="col-sm-4"></div>
+          </div><br>
+          <div class="row">
+            <div class="col-sm-5"></div>
+            <div class="col-sm-3"><button type="submit"  class="btn btn-success">Submit</button></div>
+            <div class="col-sm-4"></div>
+          </div><br><br>
+        </form>
+         
+        </div><br>
+     
+</body>
+  </html>

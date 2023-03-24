@@ -1,0 +1,97 @@
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+
+<html>
+    <style>
+        .tablecss {
+            font-family: "Trebuchet MS", Arial, Helvetica, sans-serif; border-collapse: collapse; width: 100%;
+        }
+        .tablecss td, .tablecss th {
+            border: 1px solid #ddd; padding: 8px;
+        }
+        .tablecss tr:nth-child(odd){ background-color: #f2f2f2; }
+        .tablecss tr:hover { background-color: #ddd; }
+        .tablecss th {
+            padding-top: 12px; padding-bottom: 12px; text-align: center; background-color: lavender; color: black; font-weight: bold;
+        }
+    </style>
+    <body onload="loadData()">
+        <center>
+            <h3>Pending Approvel</h3>
+            <table id="users" class="tablecss" style="width: 1000px;"></table>
+            <br><br><br>
+        </center>
+    </body>
+</html>
+<script>
+    function performAjax(httpMethod, url, params) {
+        const myPromise = new Promise((resolve, reject) => {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    resolve(this.responseText);
+                }
+                if (this.status == 500) {
+                    reject({ error: true, message: "ServerError" });
+                }
+                if (this.status == 404) {
+                    reject({ error: true, message: "Resource not found" });
+                }
+            };
+            xhttp.open(httpMethod, url, true);
+            xhttp.setRequestHeader("Content-Type", "application/json");
+            params ? xhttp.send(params) : xhttp.send();
+        });
+        return myPromise;
+    }
+
+    function loadData() {
+        const statuss="Pending";
+        const getUsersPromise = performAjax("GET", `http://localhost:4000/admin/hospitalunaprovelist?status=${statuss}`);
+        getUsersPromise
+        .then((usersList) => {
+            showUsersDetails(usersList);
+        })
+        .catch(err => {
+            alert(err.message);
+        })
+    }
+    function aproveHospital(event){
+        event.preventDefault();
+        const userid=event.target.id;
+        console.log(userid);
+        const status="active";
+                const getUpdatePromise = performAjax(
+                    "PUT",
+                    `http://localhost:4000/admin/updateAprove/${userid}`,
+                    JSON.stringify({ status })
+                );
+                getUpdatePromise
+                .then((updatePromise) => {
+                    alert('Details Updated');
+                    loadData();
+                })
+                .catch(err => {
+                    alert(err.message);
+                })
+                
+    }
+    function showUsersDetails(data) {
+        const records = JSON.parse(data);
+        let tableRow = '';
+        const tableHeader = `<tr style="background: lavender;"><th>S.No.</th><th>Type</th><th>OrganisationName</th><th>PhoneNo</th><th>Email Id</th><th>District</th><th>Area</th><th>Address</th><th>Status</th><th>Actions</th></tr>`;
+        if(records.length > 0) {
+            tableRow = records.map((rec, index) => {
+                const approveButton = `<button id="${rec._id}" onclick="aproveHospital(event)">Aprove</button>`;
+                return `<tr><td align="right">${index + 1}</td><td>${rec.Type}</td><td>${rec.OrganisationName}</td><td>${rec.PhoneNo}</td><td>${rec.Email}</td><td>${rec.District}</td><td>${rec.Area}</td><td>${rec.Address}</td><td>${rec.status}</td><td>${approveButton}</td></tr>`;
+            });
+            document.getElementById("users").innerHTML = `${tableHeader}${tableRow.join('')}`;
+        }
+        else {
+            tableRow = `<tr><td colspan="12" align="center">No Data Found</td></tr>`;
+            document.getElementById("users").innerHTML = `${tableHeader}${tableRow}`;
+        }                
+    }
+
+</script>

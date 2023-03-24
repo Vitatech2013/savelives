@@ -1,0 +1,223 @@
+<meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+  
+  <style>
+    .form-control{
+          border-radius:15px;
+      }
+      .tablecss {
+            font-family: "Trebuchet MS", Arial, Helvetica, sans-serif; border-collapse: collapse; width: 60%;
+        }
+        .tablecss td, .tablecss th {
+            border: 1px solid #ddd; padding: 8px;
+        }
+        .tablecss tr:nth-child(odd){ background-color: #f2f2f2; }
+        .tablecss tr:hover { background-color: #ddd; }
+        .tablecss th {
+            padding-top: 12px; padding-bottom: 12px; text-align: center; background-color: lavender; color: black; font-weight: bold;
+        }
+      </style>
+  <script>
+const PhoneNo=sessionStorage.getItem("phoneno");
+    function performAjax(httpMethod, url, params) {
+                const myPromise = new Promise((resolve, reject) => {
+                    var xhttp = new XMLHttpRequest();
+                    xhttp.onreadystatechange = function () {
+                        if (this.readyState == 4 && this.status == 200) {
+                            resolve(JSON.parse(this.responseText));
+    
+                        }
+                        if (this.status == 500) {
+                            reject({ error: true, message: "ServerError" });
+                        }
+                        if (this.status == 404) {
+                            reject({ error: true, message: "Resource not found" });
+                        }
+                    };
+                    xhttp.open(httpMethod, url, true);
+                    xhttp.setRequestHeader("Content-Type", "application/json");
+                    params ? xhttp.send(params) : xhttp.send();
+                });
+                return myPromise;
+            }
+            function LoadData() {
+                event.preventDefault();
+                const getdata1 = performAjax("GET", `http://localhost:4000/bloodBank/showBlood?PhoneNo=${PhoneNo}`);
+                getdata1
+                    .then((details) => {
+    
+                      View(details);
+                       
+                    })
+                    .catch(err => {
+                        alert(err.message);
+                    })
+            }
+           
+            function ShowPopUp(id,PhoneNo,District,bloodGroup,units) {
+
+                    event.preventDefault();
+                    document.getElementById("PhoneNumber").value=PhoneNo;
+                    document.getElementById("District").value=District;
+                    document.getElementById("units").value=units;
+                    document.getElementById("bloodGroup").value=bloodGroup;
+                    document.getElementById("id").value=id;
+    }
+    function UpdateDetails(){
+        const id = document.getElementById("id").value;
+        const PhoneNo = document.getElementById("PhoneNumber").value;
+        const District = document.getElementById("District").value;
+        const bloodGroup = document.getElementById("bloodGroup").value;
+        const units = document.getElementById("units").value;
+       
+
+     
+                const getUpdatePromise = performAjax(
+                    "PUT",
+                    `http://localhost:4000/bloodBank/updatebloodUnits/${id}`,
+                    JSON.stringify({PhoneNo,District,bloodGroup,units})
+                );
+                getUpdatePromise
+                .then((updatePromise) => {
+                    alert('Topic Updated');
+                    View(updatePromise);
+                })
+                .catch(err => {
+                    alert(err.message);
+                })
+           
+
+    }
+    function deleteFile(event) {
+            event.preventDefault();
+      var result = confirm("Are you sure you want to delete?");
+      if (result) {
+        const getDeletePromise = performAjax('DELETE', `http://localhost:4000/bloodBank/deletebloodUnits/${event.target.id}`);
+        getDeletePromise
+          .then((FilesList) => {
+            View(FilesList);
+          })
+          .catch(err => {
+            alert(err.message);
+          })
+      }
+    }
+    
+           
+    
+            function View(records) {
+                let tableHeader = `<tr><th>SNo</th><th>PhoneNumber</th><th>District</th><th>bloodGroup</th><th>units</th><th>Action</th></tr>`;
+                if (records.length > 0) {
+                    let tableRow = records.map((details, index) => {
+                        const deleteButton = `<a id="${details._id}"  onclick="deleteFile(event)" style="color:red"  class="glyphicon glyphicon-trash"></a>`;
+                        
+                        const editButton = `<a style="color:green" class="glyphicon glyphicon-pencil" data-toggle="modal" data-target="#myModal" onclick="ShowPopUp('${details._id}', '${details.PhoneNo}', '${details.District}', '${details.bloodGroup}', '${details.units}')"></a>`;
+
+                        return `<tr><td>${index + 1}</td><td>${details.PhoneNo}</td><td>${details.District}</td><td>${details.bloodGroup}</td><td>${details.units}</td><td>${editButton} &nbsp;&nbsp;&nbsp;${deleteButton}</td></tr>`; 
+                              
+                    });
+                    document.getElementById("viewtable").innerHTML = `<table  class="scripted table" border="2">${tableHeader}${tableRow.join('')}</table>`;
+                }
+    
+                else {
+                    tableRow = `<tr><td colspan="5" align="center">No Data Found</td></tr>`;
+                    document.getElementById("viewtable").innerHTML = `${tableHeader}${tableRow}`;
+                }
+            }
+    
+    </script>
+    
+    <body onload="LoadData()">
+      <br>
+      <br>
+      <br>
+        <center>
+        <table id=viewtable border="1"  class="tablecss" style="width: 1000px;"></table>
+    </center>
+    <br>
+    <div class="modal fade" id="myModal" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Update Details</h4>
+                </div>
+                <div class="modal-body">
+                    <form>
+                            <div class="row">
+                                    <div class="col-md-3"></div>
+                                    <div class="col-md-3"><label for="">Id</label></div>
+                                    <div class="col-md-4"><input type="text" class="form-control" disabled="false"  name="id" id="id" ></div>
+                                    <div class="col-md-2"></div>
+                                </div><br>
+                        <div class="row">
+                            <div class="col-md-3"></div>
+                            <div class="col-md-3"><label for="">PhoneNumber</label></div>
+                            <div class="col-md-4"><input type="text" class="form-control"  name="uname" id="PhoneNumber" ></div>
+                            <div class="col-md-2"></div>
+                        </div><br>
+                        
+                        <div class="row">
+                            <div class="col-md-3"></div>
+                            <div class="col-md-3"><label for="">District</label></div>
+                            <div class="col-md-4"><select id="District">
+                                <option value="-select-">-select-</option>
+                                <option value="Adilabad">Adilabad</option>
+                                <option value="Adilabad">Adilabad</option>
+                                <option value="Warangal">Warangal</option>
+                                <option value="Hydrabad">Hydrabad</option>
+                                <option value="Khamam">Khamam</option>
+                                <option value="Nizamabad">Nizamabad</option>
+                                <option value="Nalgonda">Nalgonda</option>
+                                <option value="Mahaboobnager">Mahaboobnager</option>
+                                <option value="Rangareddy">Rangareddy</option>
+                              </select></div>
+                            <div class="col-md-2"></div>
+                        </div><br>
+                        <div class="row">
+                            <div class="col-md-3"></div>
+                            <div class="col-md-3"><label for="">bloodGroup</label></div>
+                            <div class="col-md-4"><select id="bloodGroup">
+                                option value="-select-">-select-</option>
+                                <option value="-select-">-select-</option>
+                                <option value="OpVe">O+</option>
+                                <option value="OnVe">O-</option>
+                                <option value="ABpVe">AB+</option>
+                                <option value="ABnVe-">AB-</option>
+                                <option value="BpVe">B+</option>
+                                <option value="BnVe">B-</option>
+                                <option value="ApVe">A+</option>
+                                <option value="AnVe">A-</option>
+                              </select></div>
+                            <div class="col-md-2"></div>
+                        </div><br>
+                        <div class="row">
+                            <div class="col-md-3"></div>
+                            <div class="col-md-3"><label for="">Units</label></div>
+                            <div class="col-md-4"><input type="text" class="form-control"  name="uname" id="units" ></div>
+                            <div class="col-md-2"></div>
+                        </div><br>
+                        <div class="row">
+                            <div class="col-md-6">
+                                
+                            </div>
+                            <div class="col-md-3"><button type="button" id="submit" class="btn btn-info" data-dismiss="modal" onclick="UpdateDetails()">UpdateSatus</button></div>
+                            <div class="col-md-3"></div>
+                        </div>
+                    </form>   
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div> 
+     
+       
+       
+        </body>
+        
+    

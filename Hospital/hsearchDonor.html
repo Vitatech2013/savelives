@@ -1,0 +1,173 @@
+<html>
+<head>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <style>
+        .tablecss {
+            font-family: "Trebuchet MS", Arial, Helvetica, sans-serif; border-collapse: collapse; width: 100%;
+        }
+        .tablecss td, .tablecss th {
+            border: 1px solid #ddd; padding: 8px;
+        }
+        .tablecss tr:nth-child(odd){ background-color: #f2f2f2; }
+        .tablecss tr:hover { background-color: #ddd; }
+        .tablecss th {
+            padding-top: 12px; padding-bottom: 12px; text-align: center; background-color: lavender; color: black; font-weight: bold;
+        }
+    </style>
+  <script>
+      
+   function performAjax(httpMethod, url, params) {
+        const myPromise = new Promise((resolve, reject) => {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    resolve(this.responseText);
+                }
+                if (this.status == 500) {
+                    reject({ error: true, message: "ServerError" });
+                }
+                if (this.status == 404) {
+                    reject({ error: true, message: "Resource not found" });
+                }
+            };
+            xhttp.open(httpMethod, url, true);
+            xhttp.setRequestHeader("Content-Type", "application/json");
+            params ? xhttp.send(params) : xhttp.send();
+        });
+        return myPromise;
+    }
+
+    function searchBloodDonor() {
+        event.preventDefault();
+        const District=document.getElementById("dist").value;
+        const BloodGroup=document.getElementById("bgroup").value;
+       
+        const getUsersPromise = performAjax("GET", `http://localhost:4000/bloodBank/searchDoner?District=${District}&BloodGroup=${BloodGroup}`);
+        getUsersPromise
+        .then((usersList) => {
+            showUsersDetails(usersList);
+        })
+        .catch(err => {
+            alert(err.message);
+        })
+
+        const getBooldPromise = performAjax("GET", `http://localhost:4000/bloodBank/searchBloodUnits?District=${District}&bloodGroup=${BloodGroup}`);
+        getBooldPromise
+        .then((Unitslist) => {
+            View(Unitslist);
+        })
+        .catch(err => {
+            alert(err.message);
+        })
+
+
+
+    }
+    function showUsersDetails(data) {
+        const records = JSON.parse(data);
+        let tableRow = '';
+        const tableHeader = `<tr style="background: lavender;"><th>S.No.</th><th>Name</th><th>PhoneNo</th><th>Email Id</th><th>Gender</th><th>Age</th><th>BloodGroup</th><th>LastDonation</th><th>District</th><th>Area</th><th>Address</th></tr>`;
+        if(records.length > 0) {
+            tableRow = records.map((rec, index) => {
+               
+              return `<tr><td align="right">${index + 1}</td><td>${rec.Name}</td><td>${rec.PhoneNo}</td><td>${rec.Email}</td><td>${rec.Gender}</td><td>${rec.Age}</td><td>${rec.BloodGroup}</td><td>${rec.LastDonation}</td><td>${rec.District}</td><td>${rec.Area}</td><td>${rec.Address}</td></tr>`;
+            });
+            document.getElementById("users").innerHTML = `${tableHeader}${tableRow.join('')}`;
+        }
+        else {
+            tableRow = `<tr><td colspan="12" align="center">No Data Found</td></tr>`;
+            document.getElementById("users").innerHTML = `${tableHeader}${tableRow}`;
+        }                
+    }
+
+    function View(data) {
+      const records = JSON.parse(data);
+      let tableRow = '';
+      let tableHeader = `<tr><th>SNo</th><th>PhoneNumber</th><th>District</th><th>bloodGroup</th><th>units</th></tr>`;
+      if (records.length > 0) {
+          let tableRow = records.map((details, index) => {
+              
+              return `<tr><td>${index + 1}</td><td>${details.PhoneNo}</td><td>${details.District}</td><td>${details.bloodGroup}</td><td>${details.units}</td></tr>`; 
+                    
+          });
+          document.getElementById("viewtable").innerHTML = `<table  class="scripted table" border="2">${tableHeader}${tableRow.join('')}</table>`;
+      }    
+      else {
+          tableRow = `<tr><td colspan="5" align="center">No Data Found</td></tr>`;
+          document.getElementById("viewtable").innerHTML = `${tableHeader}${tableRow}`;
+      }
+  }
+  </script>
+</head>
+
+<body>
+  
+  <div class="container">
+   <br>
+   <form onsubmit="searchBloodDonor()">
+          <div class="row">
+            <div class="col-sm-3"></div>
+            <div class="col-sm-3"><label for="">Select Blood group:</label></div>
+            <div class="col-sm-3"><select id="bgroup"  class="form-control" required>
+                <option value="-select-">-select-</option>
+                <option value="OpVe">O+</option>
+                <option value="OnVe">O-</option>
+                <option value="ABpVe">AB+</option>
+                <option value="ABnVe-">AB-</option>
+                <option value="BpVe">B+</option>
+                <option value="BnVe">B-</option>
+                <option value="ApVe">A+</option>
+                <option value="AnVe">A-</option>
+              </select></div>
+            <div class="col-sm-3"></div>
+          </div><br>
+          <div class="row">
+            <div class="col-sm-3"></div>
+            <div class="col-sm-3"><label for=""> Select district:</label></div>
+            <div class="col-sm-3"><select id="dist" class="form-control" required>
+                <option value="-select-">-select-</option>
+                <option value="Adilabad">Adilabad</option>
+                <option value="Warangal">Warangal</option>
+                <option value="Hydrabad">Hydrabad</option>
+                <option value="Khamam">Khamam</option>
+                <option value="Nizamabad">Nizamabad</option>
+                <option value="Nalgonda">Nalgonda</option>
+                <option value="Mahaboobnager">Mahaboobnager</option>
+                <option value="Rangareddy">Rangareddy</option>
+              </select></div>
+            <div class="col-sm-3"></div>
+          </div><br>
+          <div class="row">
+            <div class="col-sm-6"></div>
+            <div class="col-sm-2"><button type="submit"  class="btn btn-success">Submit</button></div>
+            <div class="col-sm-4"></div>
+          </div><br><br>
+          <div class="row">
+          
+          <div class="col-sm-6">
+            <center>
+              <h3>Donor List</h3>
+              <table id="users" class="tablecss" style="width: 1000px;"></table>
+              <br><br><br>
+              <h3>BloodBank</h3>
+              <table id=viewtable border="1"  class="tablecss" style="width: 1000px;"></table>
+          </center>
+
+          </div>
+          <div class="col-sm-6"></div>
+        </div>
+    </form>
+        </div><br>
+   <br>
+   <br><br>
+ 
+
+</body>
+
+</html>
